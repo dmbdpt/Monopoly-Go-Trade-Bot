@@ -14,6 +14,7 @@ cd Monopoly-Go-Trade-Bot
 
 pip3 install virtualenv (Optional)
 python3 -m venv venv (Optional)
+source ./venv/bin/activate (Optional)
 
 pip3 install -r requirements.txt 
 ```
