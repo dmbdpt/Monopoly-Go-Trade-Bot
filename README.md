@@ -26,3 +26,9 @@ Create a .env file with a **DISCORD_TOKEN** token.
 ```sh
 python3 bot.py
 ```
+
+## Usage
+
+Add the bot to your server and send a message with **TRADE** with the screenshots of your Sticker Page attached. You'll recieve something like this:
+
+![image](https://i.imgur.com/pXQQPWL.png)
