@@ -5,7 +5,6 @@ from PIL import Image
 from PIL import ImageChops
 import sqlite3
 import shutil
-import time
 
 db_name = 'image_detector.sqlite'
 
@@ -16,7 +15,7 @@ con = sqlite3.connect(db_name)
 
 
 class ImageDetector():
-	def __init__(self, channel, author, date, folder):
+	def __init__(self, channel, author, date, folder, pics = True):
 		init_database()
 		self.channel = channel
 		self.author = author
@@ -32,8 +31,9 @@ class ImageDetector():
 
 		con.commit()
 
-		self.prepare_img()
-		self.organize_imgs()
+		if pics:
+			self.prepare_img()
+			self.organize_imgs()
 
 	def prepare_img(self):
 		cur = con.cursor()
@@ -42,11 +42,13 @@ class ImageDetector():
 		pics = os.listdir('./pics/')
 		for pic in pics:
 			img = cv2.imread('./pics/' + pic)
+			img = cv2.resize(img, (750, 1500))
 
 			gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-			gray = cv2.GaussianBlur(gray, (5, 5), 20)
+			gray = cv2.GaussianBlur(gray, (29, 29), 2)
 			cv2.imwrite('./tmp/gray.jpeg', gray)
-			edged = cv2.Canny(gray, 20, 50)
+			#cv2.imwrite('../gray.jpeg', gray)
+			edged = cv2.Canny(gray, 50, 90)
 			(cnts, _) = cv2.findContours(edged.copy(),
 										 cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 			cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:1]
@@ -55,12 +57,16 @@ class ImageDetector():
 				rect = cv2.minAreaRect(c)
 				box = cv2.boxPoints(rect)
 				box = np.int0(box)
+				#edged = cv2.drawContours(edged, [c], -1, (255, 0, 0), 3)
 
+			#cv2.imwrite('../canny_' + pic, edged)
 			x, y, w, h = cv2.boundingRect(c)
 			crop_img = img[y:y+h, x:x+w]
 			crop_img = cv2.resize(crop_img, (750, 1500))
 
+
 			cv2.imwrite('./tmp/' + pic, crop_img)
+			#cv2.imwrite('../' + pic, crop_img)
 
 			with open('./tmp/' + pic, 'rb') as f:
 				photo = f.read()
@@ -126,8 +132,8 @@ class ImageDetector():
 		if not os.path.exists('./results/'):
 			os.mkdir('./results/')
 
-		curr_pics = cur.execute('''SELECT photo,type FROM image WHERE channel_id = ? AND author_name = ? AND date = ?''',
-								(self.channel, self.author, self.date)).fetchall()
+		curr_pics = cur.execute('''SELECT photo,type,author_name FROM image WHERE channel_id = ? AND author_name = ? ''',
+								(self.channel, self.author)).fetchall()
 
 		if not os.path.exists('./tmp/'):
 			os.mkdir('./tmp/')
@@ -175,7 +181,7 @@ class ImageDetector():
 						crop = diff.crop(box)
 						if (np.sum(np.array(crop))/(crop.size[0]*crop.size[1]) > 100):
 							crop = curr.crop(box)
-							crop.save('./results/' + str(curr_pic[1]) + '/' + tester_pic[1] + "_" +  str(count) + '_' +
+							crop.save('./results/' + str(curr_pic[1]) + '/' + curr_pic[2] + "_" +  str(count) + '_' +
 									  str(x) + str(y) + '_0.jpeg')
 							crop = tester.crop(box)
 							crop.save('./results/' + str(curr_pic[1]) + '/' + tester_pic[1] + '_'+ str(count) + '_' +
