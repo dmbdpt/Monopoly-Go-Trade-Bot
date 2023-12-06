@@ -67,10 +67,10 @@ class MyClient(discord.Client):
                                 await message.author.dm_channel.send( content="You got:",files=files[autor])
                 else:
                     await message.author.dm_channel.send("No results found")
-                shutil.rmtree(folder_name)
             except Exception as e:
                 await message.author.dm_channel.send("Error, please try again later")
                 print(e)    
+            finally:
                 if os.path.exists(folder_name):
                     shutil.rmtree(folder_name)
 
